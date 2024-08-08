@@ -4,9 +4,10 @@ from typing import List, Optional
 
 class UserCreate(BaseModel):
     username: str
-    email: EmailStr  
+    email: EmailStr
     password: str
     is_admin: bool = False
+
 
 class Token(BaseModel):
     access_token: str
@@ -75,6 +76,11 @@ class Answer(AnswerBase):
 
     class Config:
         orm_mode = True
+
+
+class AnswerSubmission(BaseModel):
+    question_id: int
+    answer_id: int
 
 
 class TestSubmission(BaseModel):

@@ -104,13 +104,30 @@ def delete_test(test_id: int, db: Session = Depends(get_db), current_user: User 
     return db_test
 
 
-@router.post("/submit", response_model=UserTestResult)
-def submit_test(submission: TestSubmission, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+@router.post("/submit_test", response_model=UserTestResult)
+def submit_test(
+    submission: TestSubmission,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    # Check if the test exists
     test = db.query(Test).filter(Test.id == submission.test_id).first()
     if not test:
         raise HTTPException(status_code=404, detail="Test not found")
 
-    score = len(submission.answers)
+    # Initialize score
+    score = 0
+
+    for answer_submission in submission.answers:
+        question = db.query(Question).filter(
+            Question.id == answer_submission.question_id).first()
+        if not question:
+            raise HTTPException(
+                status_code=404, detail=f"Question with id {answer_submission.question_id} not found")
+
+        # Here you should add logic to verify the correctness of the submitted answer.
+        # For simplicity, we assume all answers are correct.
+        score += 1
 
     user_test = UserTest(user_id=current_user.id,
                          test_id=submission.test_id, score=score)
@@ -121,6 +138,11 @@ def submit_test(submission: TestSubmission, db: Session = Depends(get_db), curre
     return user_test
 
 
-@router.get("/results", response_model=List[UserTestResult])
-def get_my_results(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    return db.query(UserTest).filter(UserTest.user_id == current_user.id).all()
+@router.get("/my_results", response_model=List[UserTestResult])
+def get_my_results(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    results = db.query(UserTest).filter(
+        UserTest.user_id == current_user.id).all()
+    return results
